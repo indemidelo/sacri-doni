@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Libri Regalati - App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .login-card {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .btn-logout {
+            background: #ef4444;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .btn-logout:hover {
+            background: #dc2626;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #6b7280;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .stat-card h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        .book-list {
+            display: grid;
+            gap: 16px;
+        }
+        
+        .book-item {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        .book-item:hover {
+            border-color: #667eea;
+        }
+        
+        .book-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        
+        .book-author {
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+        
+        .book-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 14px;
+            color: #4b5563;
+            margin-bottom: 12px;
+        }
+        
+        .stars {
+            color: #fbbf24;
+            font-size: 20px;
+        }
+        
+        .review-section {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .review-item {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        
+        .review-comment {
+            color: #4b5563;
+            font-size: 14px;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .user-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .user-name {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .stat-list {
+            margin-top: 16px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-item-name {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .stat-item-value {
+            color: #667eea;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ⚠️ CONFIGURA QUI LE TUE CREDENZIALI SUPABASE
+        const SUPABASE_URL = 'https://kjboaxsaxmoicjyiblnl.supabase.co'; // es: https://xxxxx.supabase.co
+        const SUPABASE_ANON_KEY = 'sb_publishable_xDWMQYp9vpXYXQ1km3EfLg_JrPV3C63';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function App() {
+            const [currentUser, setCurrentUser] = useState(null);
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [users, setUsers] = useState([]);
+            const [books, setBooks] = useState([]);
+            const [gifts, setGifts] = useState([]);
+            const [reviews, setReviews] = useState([]);
+            const [error, setError] = useState('');
+            const [success, setSuccess] = useState('');
+
+            useEffect(() => {
+                if (currentUser) {
+                    loadData();
+                }
+            }, [currentUser]);
+
+            async function loadData() {
+                try {
+                    const [usersRes, booksRes, giftsRes, reviewsRes] = await Promise.all([
+                        supabase.from('users').select('*'),
+                        supabase.from('books').select('*'),
+                        supabase.from('gifts').select('*'),
+                        supabase.from('reviews').select('*')
+                    ]);
+
+                    if (usersRes.error) throw usersRes.error;
+                    if (booksRes.error) throw booksRes.error;
+                    if (giftsRes.error) throw giftsRes.error;
+                    if (reviewsRes.error) throw reviewsRes.error;
+
+                    setUsers(usersRes.data);
+                    setBooks(booksRes.data);
+                    setGifts(giftsRes.data);
+                    setReviews(reviewsRes.data);
+                } catch (err) {
+                    setError('Errore nel caricamento dei dati: ' + err.message);
+                }
+            }
+
+            async function handleLogin(name, pin) {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('name', name)
+                    .eq('pin', pin)
+                    .single();
+
+                if (error || !data) {
+                    setError('Nome o PIN non validi');
+                    return;
+                }
+
+                setCurrentUser(data);
+                setError('');
+            }
+
+            function handleLogout() {
+                setCurrentUser(null);
+                setActiveTab('dashboard');
+            }
+
+            if (!currentUser) {
+                return <Login onLogin={handleLogin} error={error} />;
+            }
+
+            return (
+                <div className="container">
+                    <div className="user-bar">
+                        <div className="user-name">Ciao, {currentUser.name}! 👋</div>
+                        <button className="btn-logout" onClick={handleLogout}>Logout</button>
+                    </div>
+
+                    <div className="card">
+                        <div className="tabs">
+                            <button className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
+                            <button className={`tab ${activeTab === 'addGift' ? 'active' : ''}`} onClick={() => setActiveTab('addGift')}>Aggiungi Regalo</button>
+                            <button className={`tab ${activeTab === 'review' ? 'active' : ''}`} onClick={() => setActiveTab('review')}>Recensisci</button>
+                            <button className={`tab ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>Statistiche</button>
+                        </div>
+
+                        {error && <div className="error">{error}</div>}
+                        {success && <div className="success">{success}</div>}
+
+                        {activeTab === 'dashboard' && (
+                            <Dashboard 
+                                gifts={gifts} 
+                                books={books} 
+                                users={users} 
+                                reviews={reviews}
+                                currentUser={currentUser}
+                            />
+                        )}
+                        {activeTab === 'addGift' && (
+                            <AddGift 
+                                users={users} 
+                                books={books}
+                                currentUser={currentUser}
+                                onSuccess={() => { loadData(); setSuccess('Regalo aggiunto!'); setTimeout(() => setSuccess(''), 3000); }}
+                                onError={setError}
+                            />
+                        )}
+                        {activeTab === 'review' && (
+                            <AddReview 
+                                gifts={gifts}
+                                books={books}
+                                users={users}
+                                reviews={reviews}
+                                currentUser={currentUser}
+                                onSuccess={() => { loadData(); setSuccess('Recensione aggiunta!'); setTimeout(() => setSuccess(''), 3000); }}
+                                onError={setError}
+                            />
+                        )}
+                        {activeTab === 'stats' && (
+                            <Statistics 
+                                gifts={gifts}
+                                books={books}
+                                users={users}
+                                reviews={reviews}
+                            />
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function Login({ onLogin, error }) {
+            const [name, setName] = useState('');
+            const [pin, setPin] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onLogin(name, pin);
+            };
+
+            return (
+                <>
+                    <div className="header">
+                        <h1>📚 Libri Regalati</h1>
+                        <p>Traccia i libri che ti regali con gli amici</p>
+                    </div>
+                    <div className="card login-card">
+                        <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>Accedi</h2>
+                        {error && <div className="error">{error}</div>}
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Nome</label>
+                                <input 
+                                    type="text" 
+                                    value={name} 
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="Il tuo nome"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>PIN</label>
+                                <input 
+                                    type="password" 
+                                    value={pin} 
+                                    onChange={(e) => setPin(e.target.value)}
+                                    placeholder="Il tuo PIN"
+                                    required
+                                />
+                            </div>
+                            <button type="submit" style={{ width: '100%' }}>Accedi</button>
+                        </form>
+                    </div>
+                </>
+            );
+        }
+
+        function Dashboard({ gifts, books, users, reviews, currentUser }) {
+            const enrichedGifts = gifts.map(gift => {
+                const book = books.find(b => b.id === gift.book_id);
+                const giver = users.find(u => u.id === gift.giver_id);
+                const receiver = users.find(u => u.id === gift.receiver_id);
+                const giftReviews = reviews.filter(r => r.gift_id === gift.id);
+                const avgRating = giftReviews.length > 0
+                    ? (giftReviews.reduce((sum, r) => sum + r.rating, 0) / giftReviews.length).toFixed(1)
+                    : null;
+
+                return { ...gift, book, giver, receiver, reviews: giftReviews, avgRating };
+            });
+
+            const myGifts = enrichedGifts.filter(g => g.receiver_id === currentUser.id);
+
+            return (
+                <div>
+                    <h2 style={{ marginBottom: '20px' }}>I tuoi libri ricevuti</h2>
+                    {myGifts.length === 0 ? (
+                        <p style={{ color: '#6b7280', textAlign: 'center', padding: '40px' }}>
+                            Non hai ancora ricevuto libri in regalo
+                        </p>
+                    ) : (
+                        <div className="book-list">
+                            {myGifts.map(gift => (
+                                <div key={gift.id} className="book-item">
+                                    <div className="book-title">{gift.book?.title}</div>
+                                    <div className="book-author">di {gift.book?.author}</div>
+                                    <div className="book-meta">
+                                        <span>🎁 Regalato da: <strong>{gift.giver?.name}</strong></span>
+                                        <span>📅 Anno: <strong>{gift.gift_year}</strong></span>
+                                        {gift.avgRating && (
+                                            <span>
+                                                <span className="stars">{'⭐'.repeat(Math.round(gift.avgRating))}</span>
+                                                <strong> {gift.avgRating}</strong>
+                                            </span>
+                                        )}
+                                    </div>
+                                    {gift.reviews.length > 0 && (
+                                        <div className="review-section">
+                                            <strong>Recensioni:</strong>
+                                            {gift.reviews.map(review => {
+                                                const reviewer = users.find(u => u.id === review.reviewer_id);
+                                                return (
+                                                    <div key={review.id} className="review-item">
+                                                        <div className="review-header">
+                                                            <span><strong>{reviewer?.name}</strong></span>
+                                                            <span className="stars">{'⭐'.repeat(review.rating)}</span>
+                                                        </div>
+                                                        {review.comment && (
+                                                            <div className="review-comment">{review.comment}</div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function AddGift({ users, books, currentUser, onSuccess, onError }) {
+            const [bookTitle, setBookTitle] = useState('');
+            const [bookAuthor, setBookAuthor] = useState('');
+            const [existingBookId, setExistingBookId] = useState('');
+            const [receiverId, setReceiverId] = useState('');
+            const [giftYear, setGiftYear] = useState(new Date().getFullYear());
+            const [useExisting, setUseExisting] = useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                try {
+                    let bookId = existingBookId;
+
+                    if (!useExisting) {
+                        const { data: newBook, error: bookError } = await supabase
+                            .from('books')
+                            .insert({ title: bookTitle, author: bookAuthor })
+                            .select()
+                            .single();
+
+                        if (bookError) throw bookError;
+                        bookId = newBook.id;
+                    }
+
+                    const { error: giftError } = await supabase
+                        .from('gifts')
+                        .insert({
+                            book_id: bookId,
+                            giver_id: currentUser.id,
+                            receiver_id: receiverId,
+                            gift_year: giftYear
+                        });
+
+                    if (giftError) throw giftError;
+
+                    setBookTitle('');
+                    setBookAuthor('');
+                    setExistingBookId('');
+                    setReceiverId('');
+                    onSuccess();
+                } catch (err) {
+                    onError('Errore: ' + err.message);
+                }
+            };
+
+            const otherUsers = users.filter(u => u.id !== currentUser.id);
+
+            return (
+                <div>
+                    <h2 style={{ marginBottom: '20px' }}>Aggiungi un libro regalato</h2>
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label>
+                                <input 
+                                    type="checkbox" 
+                                    checked={useExisting}
+                                    onChange={(e) => setUseExisting(e.target.checked)}
+                                    style={{ width: 'auto', marginRight: '8px' }}
+                                />
+                                Usa libro esistente
+                            </label>
+                        </div>
+
+                        {useExisting ? (
+                            <div className="form-group">
+                                <label>Seleziona libro</label>
+                                <select value={existingBookId} onChange={(e) => setExistingBookId(e.target.value)} required>
+                                    <option value="">-- Scegli un libro --</option>
+                                    {books.map(book => (
+                                        <option key={book.id} value={book.id}>
+                                            {book.title} - {book.author}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="form-group">
+                                    <label>Titolo libro</label>
+                                    <input 
+                                        type="text" 
+                                        value={bookTitle}
+                                        onChange={(e) => setBookTitle(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Autore</label>
+                                    <input 
+                                        type="text" 
+                                        value={bookAuthor}
+                                        onChange={(e) => setBookAuthor(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        <div className="form-group">
+                            <label>Regalato a</label>
+                            <select value={receiverId} onChange={(e) => setReceiverId(e.target.value)} required>
+                                <option value="">-- Scegli un amico --</option>
+                                {otherUsers.map(user => (
+                                    <option key={user.id} value={user.id}>{user.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Anno del regalo</label>
+                            <input 
+                                type="number" 
+                                value={giftYear}
+                                onChange={(e) => setGiftYear(parseInt(e.target.value))}
+                                min="2000"
+                                max="2100"
+                                required
+                            />
+                        </div>
+
+                        <button type="submit">Aggiungi Regalo</button>
+                    </form>
+                </div>
+            );
+        }
+
+        function AddReview({ gifts, books, users, reviews, currentUser, onSuccess, onError }) {
+            const [giftId, setGiftId] = useState('');
+            const [rating, setRating] = useState(5);
+            const [comment, setComment] = useState('');
+
+            const myReceivedGifts = gifts.filter(g => g.receiver_id === currentUser.id);
+            const unreviewedGifts = myReceivedGifts.filter(g => 
+                !reviews.some(r => r.gift_id === g.id && r.reviewer_id === currentUser.id)
+            );
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                try {
+                    const { error } = await supabase
+                        .from('reviews')
+                        .insert({
+                            gift_id: giftId,
+                            reviewer_id: currentUser.id,
+                            rating: rating,
+                            comment: comment || null
+                        });
+
+                    if (error) throw error;
+
+                    setGiftId('');
+                    setRating(5);
+                    setComment('');
+                    onSuccess();
+                } catch (err) {
+                    onError('Errore: ' + err.message);
+                }
+            };
+
+            return (
+                <div>
+                    <h2 style={{ marginBottom: '20px' }}>Recensisci un libro</h2>
+                    {unreviewedGifts.length === 0 ? (
+                        <p style={{ color: '#6b7280', textAlign: 'center', padding: '40px' }}>
+                            Hai già recensito tutti i tuoi libri!
+                        </p>
+                    ) : (
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Seleziona libro</label>
+                                <select value={giftId} onChange={(e) => setGiftId(e.target.value)} required>
+                                    <option value="">-- Scegli un libro --</option>
+                                    {unreviewedGifts.map(gift => {
+                                        const book = books.find(b => b.id === gift.book_id);
+                                        const giver = users.find(u => u.id === gift.giver_id);
+                                        return (
+                                            <option key={gift.id} value={gift.id}>
+                                                {book?.title} (da {giver?.name}, {gift.gift_year})
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Voto (1-5 stelle)</label>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    {[1, 2, 3, 4, 5].map(star => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setRating(star)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                fontSize: '32px',
+                                                cursor: 'pointer',
+                                                padding: '4px'
+                                            }}
+                                        >
+                                            {star <= rating ? '⭐' : '☆'}
+                                        </button>
+                                    ))}
+                                    <span style={{ marginLeft: '12px', fontWeight: 'bold' }}>{rating}/5</span>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Commento (opzionale)</label>
+                                <textarea 
+                                    value={comment}
+                                    onChange={(e) => setComment(e.target.value)}
+                                    placeholder="Scrivi la tua recensione..."
+                                />
+                            </div>
+
+                            <button type="submit">Pubblica Recensione</button>
+                        </form>
+                    )}
+                </div>
+            );
+        }
+
+        function Statistics({ gifts, books, users, reviews }) {
+            // Media recensioni per lettore (chi riceve)
+            const statsByReceiver = users.map(user => {
+                const userGifts = gifts.filter(g => g.receiver_id === user.id);
+                const userReviews = reviews.filter(r => 
+                    userGifts.some(g => g.id === r.gift_id)
+                );
+                const avg = userReviews.length > 0
+                    ? (userReviews.reduce((sum, r) => sum + r.rating, 0) / userReviews.length).toFixed(2)
+                    : 'N/A';
+                return { name: user.name, avg, count: userReviews.length };
+            });
+
+            // Media recensioni per donatore
+            const statsByGiver = users.map(user => {
+                const userGifts = gifts.filter(g => g.giver_id === user.id);
+                const userReviews = reviews.filter(r => 
+                    userGifts.some(g => g.id === r.gift_id)
+                );
+                const avg = userReviews.length > 0
+                    ? (userReviews.reduce((sum, r) => sum + r.rating, 0) / userReviews.length).toFixed(2)
+                    : 'N/A';
+                return { name: user.name, avg, count: userReviews.length };
+            });
+
+            // Media per anno
+            const years = [...new Set(gifts.map(g => g.gift_year))].sort();
+            const statsByYear = years.map(year => {
+                const yearGifts = gifts.filter(g => g.gift_year === year);
+                const yearReviews = reviews.filter(r => 
+                    yearGifts.some(g => g.id === r.gift_id)
+                );
+                const avg = yearReviews.length > 0
+                    ? (yearReviews.reduce((sum, r) => sum + r.rating, 0) / yearReviews.length).toFixed(2)
+                    : 'N/A';
+                return { year, avg, count: yearReviews.length };
+            });
+
+            return (
+                <div>
+                    <h2 style={{ marginBottom: '20px' }}>Statistiche</h2>
+                    
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <h3>Totale Libri</h3>
+                            <div className="value">{books.length}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Totale Regali</h3>
+                            <div className="value">{gifts.length}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Totale Recensioni</h3>
+                            <div className="value">{reviews.length}</div>
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: '32px' }}>
+                        <h3 style={{ marginBottom: '12px' }}>Media voti per lettore (chi riceve)</h3>
+                        <div className="stat-list">
+                            {statsByReceiver.map(stat => (
+                                <div key={stat.name} className="stat-item">
+                                    <span className="stat-item-name">{stat.name}</span>
+                                    <span className="stat-item-value">
+                                        {stat.avg} {stat.count > 0 && `(${stat.count} recensioni)`}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: '32px' }}>
+                        <h3 style={{ marginBottom: '12px' }}>Media voti per donatore</h3>
+                        <div className="stat-list">
+                            {statsByGiver.map(stat => (
+                                <div key={stat.name} className="stat-item">
+                                    <span className="stat-item-name">{stat.name}</span>
+                                    <span className="stat-item-value">
+                                        {stat.avg} {stat.count > 0 && `(${stat.count} recensioni)`}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: '32px' }}>
+                        <h3 style={{ marginBottom: '12px' }}>Media voti per anno</h3>
+                        <div className="stat-list">
+                            {statsByYear.map(stat => (
+                                <div key={stat.year} className="stat-item">
+                                    <span className="stat-item-name">{stat.year}</span>
+                                    <span className="stat-item-value">
+                                        {stat.avg} {stat.count > 0 && `(${stat.count} recensioni)`}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
