@@ -380,7 +380,6 @@
                         <div className="tabs">
                             <button className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
                             <button className={`tab ${activeTab === 'addGift' ? 'active' : ''}`} onClick={() => setActiveTab('addGift')}>Aggiungi Regalo</button>
-                            <button className={`tab ${activeTab === 'review' ? 'active' : ''}`} onClick={() => setActiveTab('review')}>Recensisci</button>
                             <button className={`tab ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>Statistiche</button>
                         </div>
 
@@ -403,17 +402,6 @@
                                 books={books}
                                 currentUser={currentUser}
                                 onSuccess={() => { loadData(); setSuccess('Regalo aggiunto!'); setTimeout(() => setSuccess(''), 3000); }}
-                                onError={setError}
-                            />
-                        )}
-                        {activeTab === 'review' && (
-                            <AddReview 
-                                gifts={gifts}
-                                books={books}
-                                users={users}
-                                reviews={reviews}
-                                currentUser={currentUser}
-                                onSuccess={() => { loadData(); setSuccess('Recensione aggiunta!'); setTimeout(() => setSuccess(''), 3000); }}
                                 onError={setError}
                             />
                         )}
