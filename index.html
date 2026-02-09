@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sacri Doni - App</title>
+    <title>Libri Regalati - App</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -299,9 +299,8 @@
         const { useState, useEffect } = React;
 
         // ⚠️ CONFIGURA QUI LE TUE CREDENZIALI SUPABASE
-        const SUPABASE_URL = 'https://kjboaxsaxmoicjyiblnl.supabase.co'; // es: https://xxxxx.supabase.co
-        const SUPABASE_ANON_KEY = 'sb_publishable_xDWMQYp9vpXYXQ1km3EfLg_JrPV3C63';
-
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // es: https://xxxxx.supabase.co
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -395,6 +394,7 @@
                                 users={users} 
                                 reviews={reviews}
                                 currentUser={currentUser}
+                                onReviewUpdated={() => { loadData(); setSuccess('Voto aggiornato!'); setTimeout(() => setSuccess(''), 3000); }}
                             />
                         )}
                         {activeTab === 'addGift' && (
@@ -442,8 +442,8 @@
             return (
                 <>
                     <div className="header">
-                        <h1>Sacri Doni</h1>
-                        <p>La ricerca del libro perfetto</p>
+                        <h1>📚 Libri Regalati</h1>
+                        <p>Traccia i libri che ti regali con gli amici</p>
                     </div>
                     <div className="card login-card">
                         <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>Accedi</h2>
@@ -476,7 +476,10 @@
             );
         }
 
-        function Dashboard({ gifts, books, users, reviews, currentUser }) {
+        function Dashboard({ gifts, books, users, reviews, currentUser, onReviewUpdated }) {
+            const [editingGiftId, setEditingGiftId] = useState(null);
+            const [editRating, setEditRating] = useState(null);
+
             // Ogni riga rappresenta un regalo specifico (un libro regalato DA qualcuno A qualcuno)
             const giftRows = gifts.map(gift => {
                 const book = books.find(b => b.id === gift.book_id);
@@ -503,6 +506,54 @@
             // Ordina per anno
             const sortedGifts = giftRows.sort((a, b) => a.year - b.year);
 
+            const handleEditClick = (giftId, currentRating) => {
+                setEditingGiftId(giftId);
+                setEditRating(currentRating || 3);
+            };
+
+            const handleSaveRating = async (giftId, reviewId) => {
+                try {
+                    if (reviewId) {
+                        // Aggiorna recensione esistente
+                        const { error } = await supabase
+                            .from('reviews')
+                            .update({ rating: editRating })
+                            .eq('id', reviewId);
+                        
+                        if (error) throw error;
+                    } else {
+                        // Crea nuova recensione
+                        const { error } = await supabase
+                            .from('reviews')
+                            .insert({
+                                gift_id: giftId,
+                                reviewer_id: currentUser.id,
+                                rating: editRating
+                            });
+                        
+                        if (error) throw error;
+                    }
+                    
+                    setEditingGiftId(null);
+                    setEditRating(null);
+                    onReviewUpdated();
+                } catch (err) {
+                    alert('Errore nel salvare il voto: ' + err.message);
+                }
+            };
+
+            const handleCancelEdit = () => {
+                setEditingGiftId(null);
+                setEditRating(null);
+            };
+
+            const getCurrentUserReview = (row) => {
+                if (currentUser.id === 1) return row.giulioReview;
+                if (currentUser.id === 2) return row.lucaReview;
+                if (currentUser.id === 3) return row.sergioReview;
+                return null;
+            };
+
             return (
                 <div>
                     <h2 style={{ marginBottom: '20px' }}>Tutti i libri regalati</h2>
@@ -526,10 +577,14 @@
                                         <th style={headerStyle}>Voto Giulio</th>
                                         <th style={headerStyle}>Voto Luca</th>
                                         <th style={headerStyle}>Voto Sergio</th>
+                                        <th style={headerStyle}>Azioni</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {sortedGifts.map((row, idx) => {
+                                        const isEditing = editingGiftId === row.id;
+                                        const currentUserReview = getCurrentUserReview(row);
+                                        
                                         return (
                                             <tr key={row.id} style={{
                                                 background: idx % 2 === 0 ? '#f9fafb' : 'white',
@@ -570,6 +625,66 @@
                                                     fontWeight: '600'
                                                 }}>
                                                     {row.sergioReview ? row.sergioReview.rating : '-'}
+                                                </td>
+                                                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                                                    {isEditing ? (
+                                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <select 
+                                                                value={editRating} 
+                                                                onChange={(e) => setEditRating(parseInt(e.target.value))}
+                                                                style={{ padding: '4px', fontSize: '13px' }}
+                                                            >
+                                                                <option value={1}>1 ⭐</option>
+                                                                <option value={2}>2 ⭐⭐</option>
+                                                                <option value={3}>3 ⭐⭐⭐</option>
+                                                                <option value={4}>4 ⭐⭐⭐⭐</option>
+                                                                <option value={5}>5 ⭐⭐⭐⭐⭐</option>
+                                                            </select>
+                                                            <button 
+                                                                onClick={() => handleSaveRating(row.id, currentUserReview?.id)}
+                                                                style={{ 
+                                                                    padding: '4px 8px', 
+                                                                    fontSize: '12px',
+                                                                    background: '#10b981',
+                                                                    color: 'white',
+                                                                    border: 'none',
+                                                                    borderRadius: '4px',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                            >
+                                                                ✓
+                                                            </button>
+                                                            <button 
+                                                                onClick={handleCancelEdit}
+                                                                style={{ 
+                                                                    padding: '4px 8px', 
+                                                                    fontSize: '12px',
+                                                                    background: '#6b7280',
+                                                                    color: 'white',
+                                                                    border: 'none',
+                                                                    borderRadius: '4px',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleEditClick(row.id, currentUserReview?.rating)}
+                                                            style={{
+                                                                padding: '4px 12px',
+                                                                fontSize: '12px',
+                                                                background: '#667eea',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            {currentUserReview ? 'Modifica' : 'Vota'}
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );
