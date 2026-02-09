@@ -302,6 +302,7 @@
         const SUPABASE_URL = 'https://kjboaxsaxmoicjyiblnl.supabase.co'; // es: https://xxxxx.supabase.co
         const SUPABASE_ANON_KEY = 'sb_publishable_xDWMQYp9vpXYXQ1km3EfLg_JrPV3C63';
 
+
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         function App() {
@@ -442,7 +443,7 @@
                 <>
                     <div className="header">
                         <h1>Sacri Doni</h1>
-                        <p>Alla ricerca del regalo perfetto</p>
+                        <p>La ricerca del libro perfetto</p>
                     </div>
                     <div className="card login-card">
                         <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>Accedi</h2>
@@ -476,68 +477,130 @@
         }
 
         function Dashboard({ gifts, books, users, reviews, currentUser }) {
-            const enrichedGifts = gifts.map(gift => {
+            // Ogni riga rappresenta un regalo specifico (un libro regalato DA qualcuno A qualcuno)
+            const giftRows = gifts.map(gift => {
                 const book = books.find(b => b.id === gift.book_id);
                 const giver = users.find(u => u.id === gift.giver_id);
                 const receiver = users.find(u => u.id === gift.receiver_id);
-                const giftReviews = reviews.filter(r => r.gift_id === gift.id);
-                const avgRating = giftReviews.length > 0
-                    ? (giftReviews.reduce((sum, r) => sum + r.rating, 0) / giftReviews.length).toFixed(1)
-                    : null;
-
-                return { ...gift, book, giver, receiver, reviews: giftReviews, avgRating };
+                
+                // Trova le recensioni dei 3 utenti per questo specifico regalo
+                const giulioReview = reviews.find(r => r.gift_id === gift.id && r.reviewer_id === 1);
+                const lucaReview = reviews.find(r => r.gift_id === gift.id && r.reviewer_id === 2);
+                const sergioReview = reviews.find(r => r.gift_id === gift.id && r.reviewer_id === 3);
+                
+                return {
+                    id: gift.id,
+                    book,
+                    year: gift.gift_year,
+                    giver,
+                    receiver,
+                    giulioReview,
+                    lucaReview,
+                    sergioReview
+                };
             });
 
-            const myGifts = enrichedGifts.filter(g => g.receiver_id === currentUser.id);
+            // Ordina per anno
+            const sortedGifts = giftRows.sort((a, b) => a.year - b.year);
 
             return (
                 <div>
-                    <h2 style={{ marginBottom: '20px' }}>I tuoi libri ricevuti</h2>
-                    {myGifts.length === 0 ? (
+                    <h2 style={{ marginBottom: '20px' }}>Tutti i libri regalati</h2>
+                    {sortedGifts.length === 0 ? (
                         <p style={{ color: '#6b7280', textAlign: 'center', padding: '40px' }}>
-                            Non hai ancora ricevuto libri in regalo
+                            Nessun libro ancora registrato
                         </p>
                     ) : (
-                        <div className="book-list">
-                            {myGifts.map(gift => (
-                                <div key={gift.id} className="book-item">
-                                    <div className="book-title">{gift.book?.title}</div>
-                                    <div className="book-author">di {gift.book?.author}</div>
-                                    <div className="book-meta">
-                                        <span>🎁 Regalato da: <strong>{gift.giver?.name}</strong></span>
-                                        <span>📅 Anno: <strong>{gift.gift_year}</strong></span>
-                                        {gift.avgRating && (
-                                            <span>
-                                                <span className="stars">{'⭐'.repeat(Math.round(gift.avgRating))}</span>
-                                                <strong> {gift.avgRating}</strong>
-                                            </span>
-                                        )}
-                                    </div>
-                                    {gift.reviews.length > 0 && (
-                                        <div className="review-section">
-                                            <strong>Recensioni:</strong>
-                                            {gift.reviews.map(review => {
-                                                const reviewer = users.find(u => u.id === review.reviewer_id);
-                                                return (
-                                                    <div key={review.id} className="review-item">
-                                                        <div className="review-header">
-                                                            <span><strong>{reviewer?.name}</strong></span>
-                                                            <span className="stars">{'⭐'.repeat(review.rating)}</span>
-                                                        </div>
-                                                        {review.comment && (
-                                                            <div className="review-comment">{review.comment}</div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{
+                                width: '100%',
+                                borderCollapse: 'collapse',
+                                fontSize: '14px'
+                            }}>
+                                <thead>
+                                    <tr style={{ background: '#667eea', color: 'white' }}>
+                                        <th style={headerStyle}>Titolo</th>
+                                        <th style={headerStyle}>Anno</th>
+                                        <th style={headerStyle}>Regalato da</th>
+                                        <th style={headerStyle}>Regalato a</th>
+                                        <th style={headerStyle}>Voto Giulio</th>
+                                        <th style={headerStyle}>Voto Luca</th>
+                                        <th style={headerStyle}>Voto Sergio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {sortedGifts.map((row, idx) => {
+                                        return (
+                                            <tr key={row.id} style={{
+                                                background: idx % 2 === 0 ? '#f9fafb' : 'white',
+                                                borderBottom: '1px solid #e5e7eb'
+                                            }}>
+                                                <td style={cellStyle}>
+                                                    <strong>{row.book?.title}</strong>
+                                                </td>
+                                                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                                                    {row.year}
+                                                </td>
+                                                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                                                    {row.giver?.name}
+                                                </td>
+                                                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                                                    {row.receiver?.name}
+                                                </td>
+                                                <td style={{ 
+                                                    ...cellStyle, 
+                                                    textAlign: 'center',
+                                                    background: getRatingColor(row.giulioReview?.rating),
+                                                    fontWeight: '600'
+                                                }}>
+                                                    {row.giulioReview ? row.giulioReview.rating : '-'}
+                                                </td>
+                                                <td style={{ 
+                                                    ...cellStyle, 
+                                                    textAlign: 'center',
+                                                    background: getRatingColor(row.lucaReview?.rating),
+                                                    fontWeight: '600'
+                                                }}>
+                                                    {row.lucaReview ? row.lucaReview.rating : '-'}
+                                                </td>
+                                                <td style={{ 
+                                                    ...cellStyle, 
+                                                    textAlign: 'center',
+                                                    background: getRatingColor(row.sergioReview?.rating),
+                                                    fontWeight: '600'
+                                                }}>
+                                                    {row.sergioReview ? row.sergioReview.rating : '-'}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>
             );
+        }
+
+        const headerStyle = {
+            padding: '12px 16px',
+            textAlign: 'left',
+            fontWeight: '600',
+            borderBottom: '2px solid #5568d3'
+        };
+
+        const cellStyle = {
+            padding: '12px 16px',
+        };
+
+        function getRatingColor(rating) {
+            if (!rating) return 'transparent';
+            if (rating === 1) return '#fee2e2'; // rosso chiaro
+            if (rating === 2) return '#fed7aa'; // arancione chiaro
+            if (rating === 3) return '#fef3c7'; // giallo chiaro
+            if (rating === 4) return '#d1fae5'; // verde chiaro
+            if (rating === 5) return '#a7f3d0'; // verde forte
+            return 'transparent';
         }
 
         function AddGift({ users, books, currentUser, onSuccess, onError }) {
