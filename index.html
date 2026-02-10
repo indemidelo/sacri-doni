@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script> <!-- Config locale - ignorato su Render -->
     <style>
         * {
             margin: 0;
@@ -380,7 +381,6 @@
                         <div className="tabs">
                             <button className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
                             <button className={`tab ${activeTab === 'addGift' ? 'active' : ''}`} onClick={() => setActiveTab('addGift')}>Aggiungi Regalo</button>
-                            <button className={`tab ${activeTab === 'review' ? 'active' : ''}`} onClick={() => setActiveTab('review')}>Recensisci</button>
                             <button className={`tab ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>Statistiche</button>
                         </div>
 
@@ -403,17 +403,6 @@
                                 books={books}
                                 currentUser={currentUser}
                                 onSuccess={() => { loadData(); setSuccess('Regalo aggiunto!'); setTimeout(() => setSuccess(''), 3000); }}
-                                onError={setError}
-                            />
-                        )}
-                        {activeTab === 'review' && (
-                            <AddReview 
-                                gifts={gifts}
-                                books={books}
-                                users={users}
-                                reviews={reviews}
-                                currentUser={currentUser}
-                                onSuccess={() => { loadData(); setSuccess('Recensione aggiunta!'); setTimeout(() => setSuccess(''), 3000); }}
                                 onError={setError}
                             />
                         )}
@@ -479,6 +468,7 @@
         function Dashboard({ gifts, books, users, reviews, currentUser, onReviewUpdated }) {
             const [editingGiftId, setEditingGiftId] = useState(null);
             const [editRating, setEditRating] = useState(null);
+            const [loading, setLoading] = useState(false);
 
             // Ogni riga rappresenta un regalo specifico (un libro regalato DA qualcuno A qualcuno)
             const giftRows = gifts.map(gift => {
@@ -512,6 +502,7 @@
             };
 
             const handleSaveRating = async (giftId, reviewId) => {
+                setLoading(true);
                 try {
                     if (reviewId) {
                         // Aggiorna recensione esistente
@@ -534,11 +525,16 @@
                         if (error) throw error;
                     }
                     
+                    // Reset stato editing
                     setEditingGiftId(null);
                     setEditRating(null);
-                    await onReviewUpdated(); // Aspetta il reload
+                    
+                    // Ricarica i dati
+                    await onReviewUpdated();
                 } catch (err) {
                     alert('Errore nel salvare il voto: ' + err.message);
+                } finally {
+                    setLoading(false);
                 }
             };
 
@@ -606,7 +602,8 @@
                                                     ...cellStyle, 
                                                     textAlign: 'center',
                                                     background: getRatingColor(row.giulioReview?.rating),
-                                                    fontWeight: '600'
+                                                    fontWeight: '600',
+                                                    fontSize: '16px'
                                                 }}>
                                                     {row.giulioReview ? row.giulioReview.rating : '-'}
                                                 </td>
@@ -614,7 +611,8 @@
                                                     ...cellStyle, 
                                                     textAlign: 'center',
                                                     background: getRatingColor(row.lucaReview?.rating),
-                                                    fontWeight: '600'
+                                                    fontWeight: '600',
+                                                    fontSize: '16px'
                                                 }}>
                                                     {row.lucaReview ? row.lucaReview.rating : '-'}
                                                 </td>
@@ -622,7 +620,8 @@
                                                     ...cellStyle, 
                                                     textAlign: 'center',
                                                     background: getRatingColor(row.sergioReview?.rating),
-                                                    fontWeight: '600'
+                                                    fontWeight: '600',
+                                                    fontSize: '16px'
                                                 }}>
                                                     {row.sergioReview ? row.sergioReview.rating : '-'}
                                                 </td>
@@ -633,29 +632,32 @@
                                                                 value={editRating} 
                                                                 onChange={(e) => setEditRating(parseInt(e.target.value))}
                                                                 style={{ padding: '4px', fontSize: '13px' }}
+                                                                disabled={loading}
                                                             >
-                                                                <option value={1}>1 ⭐</option>
-                                                                <option value={2}>2 ⭐⭐</option>
-                                                                <option value={3}>3 ⭐⭐⭐</option>
-                                                                <option value={4}>4 ⭐⭐⭐⭐</option>
-                                                                <option value={5}>5 ⭐⭐⭐⭐⭐</option>
+                                                                <option value={1}>1</option>
+                                                                <option value={2}>2</option>
+                                                                <option value={3}>3</option>
+                                                                <option value={4}>4</option>
+                                                                <option value={5}>5</option>
                                                             </select>
                                                             <button 
                                                                 onClick={() => handleSaveRating(row.id, currentUserReview?.id)}
+                                                                disabled={loading}
                                                                 style={{ 
                                                                     padding: '4px 8px', 
                                                                     fontSize: '12px',
-                                                                    background: '#10b981',
+                                                                    background: loading ? '#9ca3af' : '#10b981',
                                                                     color: 'white',
                                                                     border: 'none',
                                                                     borderRadius: '4px',
-                                                                    cursor: 'pointer'
+                                                                    cursor: loading ? 'wait' : 'pointer'
                                                                 }}
                                                             >
-                                                                ✓
+                                                                {loading ? '...' : '✓'}
                                                             </button>
                                                             <button 
                                                                 onClick={handleCancelEdit}
+                                                                disabled={loading}
                                                                 style={{ 
                                                                     padding: '4px 8px', 
                                                                     fontSize: '12px',
@@ -663,7 +665,7 @@
                                                                     color: 'white',
                                                                     border: 'none',
                                                                     borderRadius: '4px',
-                                                                    cursor: 'pointer'
+                                                                    cursor: loading ? 'not-allowed' : 'pointer'
                                                                 }}
                                                             >
                                                                 ✕

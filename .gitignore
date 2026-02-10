@@ -1,0 +1,9 @@
+# File con credenziali locali - NON caricare su GitHub
+config.js
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
