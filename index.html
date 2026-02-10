@@ -500,8 +500,15 @@
                 };
             });
 
-            // Ordina per anno
-            const sortedGifts = giftRows.sort((a, b) => a.year - b.year);
+            // Ordina per anno decrescente, poi per nome del regalatore
+            const sortedGifts = giftRows.sort((a, b) => {
+                // Prima ordina per anno (decrescente)
+                if (b.year !== a.year) {
+                    return b.year - a.year;
+                }
+                // Se stesso anno, ordina per nome regalatore (alfabetico)
+                return (a.giver?.name || '').localeCompare(b.giver?.name || '');
+            });
 
             const handleEditClick = (giftId, currentRating) => {
                 console.log('🔵 CLICK MODIFICA - giftId:', giftId, 'currentRating:', currentRating);
