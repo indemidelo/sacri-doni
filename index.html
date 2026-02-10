@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script> <!-- Config locale - ignorato su Render -->
     <style>
         * {
             margin: 0;
@@ -497,31 +496,41 @@
             const sortedGifts = giftRows.sort((a, b) => a.year - b.year);
 
             const handleEditClick = (giftId, currentRating) => {
+                console.log('🔵 CLICK MODIFICA - giftId:', giftId, 'currentRating:', currentRating);
                 setEditingGiftId(giftId);
                 setEditRating(currentRating || 3);
+                console.log('🔵 Stato impostato:', { editingGiftId: giftId, editRating: currentRating || 3 });
             };
 
             const handleSaveRating = async (giftId, reviewId) => {
+                console.log('🟢 INIZIO handleSaveRating');
                 setLoading(true);
+                console.log('🟢 Salvando voto:', { giftId, reviewId, editRating, userId: currentUser.id });
                 try {
                     if (reviewId) {
                         // Aggiorna recensione esistente
-                        const { error } = await supabase
+                        console.log('UPDATE review:', reviewId, 'con rating:', editRating);
+                        const { data, error } = await supabase
                             .from('reviews')
                             .update({ rating: editRating })
-                            .eq('id', reviewId);
+                            .eq('id', reviewId)
+                            .select();
                         
+                        console.log('Risultato UPDATE:', { data, error });
                         if (error) throw error;
                     } else {
                         // Crea nuova recensione
-                        const { error } = await supabase
+                        console.log('INSERT review per gift:', giftId, 'reviewer:', currentUser.id, 'rating:', editRating);
+                        const { data, error } = await supabase
                             .from('reviews')
                             .insert({
                                 gift_id: giftId,
                                 reviewer_id: currentUser.id,
                                 rating: editRating
-                            });
+                            })
+                            .select();
                         
+                        console.log('Risultato INSERT:', { data, error });
                         if (error) throw error;
                     }
                     
@@ -530,8 +539,11 @@
                     setEditRating(null);
                     
                     // Ricarica i dati
+                    console.log('Ricaricando dati...');
                     await onReviewUpdated();
+                    console.log('Dati ricaricati!');
                 } catch (err) {
+                    console.error('ERRORE:', err);
                     alert('Errore nel salvare il voto: ' + err.message);
                 } finally {
                     setLoading(false);
