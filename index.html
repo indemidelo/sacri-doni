@@ -320,6 +320,13 @@
                 }
             }, [currentUser]);
 
+            // Ricarica dati quando si passa al tab Statistiche
+            useEffect(() => {
+                if (activeTab === 'stats' && currentUser) {
+                    loadData();
+                }
+            }, [activeTab]);
+
             async function loadData() {
                 try {
                     const [usersRes, booksRes, giftsRes, reviewsRes] = await Promise.all([
@@ -411,6 +418,7 @@
                                 books={books}
                                 users={users}
                                 reviews={reviews}
+                                key={reviews.length} 
                             />
                         )}
                     </div>
@@ -956,6 +964,8 @@
         }
 
         function Statistics({ gifts, books, users, reviews }) {
+            const lastUpdate = new Date().toLocaleTimeString('it-IT');
+            
             // Media recensioni per lettore (chi riceve)
             const statsByReceiver = users.map(user => {
                 const userGifts = gifts.filter(g => g.receiver_id === user.id);
@@ -995,7 +1005,12 @@
 
             return (
                 <div>
-                    <h2 style={{ marginBottom: '20px' }}>Statistiche</h2>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <h2 style={{ margin: 0 }}>Statistiche</h2>
+                        <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                            Aggiornato alle {lastUpdate}
+                        </span>
+                    </div>
                     
                     <div className="stats-grid">
                         <div className="stat-card">
