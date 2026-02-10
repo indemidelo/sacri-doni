@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: sacri-doni 
+    env: static
+    buildCommand: ./build.sh
+    staticPublishPath: ./
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
