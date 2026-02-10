@@ -966,19 +966,16 @@
         function Statistics({ gifts, books, users, reviews }) {
             const lastUpdate = new Date().toLocaleTimeString('it-IT');
             
-            // Media recensioni per lettore (chi riceve)
-            const statsByReceiver = users.map(user => {
-                const userGifts = gifts.filter(g => g.receiver_id === user.id);
-                const userReviews = reviews.filter(r => 
-                    userGifts.some(g => g.id === r.gift_id)
-                );
+            // Media recensioni PER LETTORE (quante recensioni ha SCRITTO ogni utente)
+            const statsByReviewer = users.map(user => {
+                const userReviews = reviews.filter(r => r.reviewer_id === user.id);
                 const avg = userReviews.length > 0
                     ? (userReviews.reduce((sum, r) => sum + r.rating, 0) / userReviews.length).toFixed(2)
                     : 'N/A';
                 return { name: user.name, avg, count: userReviews.length };
             });
 
-            // Media recensioni per donatore
+            // Media recensioni PER DONATORE (media voti ricevuti dai libri che ha regalato)
             const statsByGiver = users.map(user => {
                 const userGifts = gifts.filter(g => g.giver_id === user.id);
                 const userReviews = reviews.filter(r => 
@@ -1028,9 +1025,9 @@
                     </div>
 
                     <div style={{ marginTop: '32px' }}>
-                        <h3 style={{ marginBottom: '12px' }}>Media voti per lettore (chi riceve)</h3>
+                        <h3 style={{ marginBottom: '12px' }}>Media voti per lettore (recensioni scritte)</h3>
                         <div className="stat-list">
-                            {statsByReceiver.map(stat => (
+                            {statsByReviewer.map(stat => (
                                 <div key={stat.name} className="stat-item">
                                     <span className="stat-item-name">{stat.name}</span>
                                     <span className="stat-item-value">
